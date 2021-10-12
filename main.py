@@ -1,9 +1,12 @@
+import time
+
 from PyQt5.uic.properties import QtWidgets
 from PyQt5 import uic  # Импортируем uic
-from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog
+from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QWidget
 import speech_recognition as sr
 import sys
 import traceback
+from convert_func import *
 
 r = sr.Recognizer()
 
@@ -23,12 +26,15 @@ sys.excepthook = log_uncaught_exceptions
 class MyWidget(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.info_form = InfoForm(self)
         self.f_path = ''
-        uic.loadUi('lmao.ui', self)  # Загружаем дизайн
+        uic.loadUi('main_form.ui', self)  # Загружаем дизайн
+        self.setWindowTitle('Audio converter')
         # Обратите внимание: имя элемента такое же как в QTDesigner
         self.file_btn.clicked.connect(self.choose_file)
         self.convert_btn.clicked.connect(self.convert_qt)
-        self.setFixedSize(1000, 700)
+        self.setFixedSize(850, 500)
+        self.info_btn.clicked.connect(self.open_info_form)
 
     def choose_file(self):
         fname = QFileDialog.getOpenFileName(
@@ -40,20 +46,27 @@ class MyWidget(QMainWindow):
         res = convert(self.f_path)
         self.res_space.setPlainText(str(res))
 
+    def open_info_form(self):
+        self.info_form.show()
+
+
+class InfoForm(QWidget):
+    def __init__(self, *args):
+        super().__init__()
+        self.initUI(args)
+        uic.loadUi('info_form.ui', self)
+        self.label.setText('<a href="https://github.com/MishaSok">GitHub Account</a>')
+        self.label.setOpenExternalLinks(True)
+        self.label_2.setText('<a href="https://github.com/MishaSok/audio_converter_wav">GitHub Repository</a>')
+        self.label_2.setOpenExternalLinks(True)
+
+    def initUI(self, args):
+        self.setFixedSize(400, 400)
+        self.setWindowTitle('Информация')
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = MyWidget()
     ex.show()
     sys.exit(app.exec_())
-
-
-def convert(file_path):
-    with sr.AudioFile(file_path) as source:
-        audio = r.listen(source)
-        try:
-            text = (r.recognize_google(audio, language="ru_RU"))
-            print('working on...')
-            return text
-        except:
-            return 'Sorry.. run again..'
